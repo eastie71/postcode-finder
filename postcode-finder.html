@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags always come first -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>Postcode finder</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
+
+    <style type="text/css">
+       html { 
+          background: url(images/houses.jpg) no-repeat center center fixed; 
+          -webkit-background-size: cover;
+          -moz-background-size: cover;
+          -o-background-size: cover;
+          background-size: cover;
+        }
+        body {
+            background-color: transparent;
+        }
+        .container {
+            margin-top: 80px;
+            color: white;
+            text-align: center;
+        }
+        #submitButton {
+            margin-top: 25px;
+        }
+        #address {
+            margin: 0 auto;
+            width: 90%;
+        }
+        #userMessage {
+            margin: 0 auto;
+            width: 90%;
+        }
+    </style>
+  </head>
+  <body>
+        <div class="container">
+            <h2>Postcode or Zipcode finder</h2>
+            <form>
+                <fieldset class="form-group">
+                    <input type="text" class="form-control" id="address" name="address" placeholder="Enter partial address, town or suburb">
+                    <button id="submitButton" class="btn btn-primary btn-lg">Submit</button>
+                </fieldset>
+            </form>
+            <div id="userMessage"></div>
+        </div>
+
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <!--<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script> -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js" integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1" crossorigin="anonymous"></script>
+    
+    <script type="text/javascript">
+        $("#submitButton").click(function(e) {
+            return(validateForm(e));
+        });
+        function validateForm(e) {
+            e.preventDefault();
+            var errorMessage = "";
+            var encodedSearch = "https://maps.googleapis.com/maps/api/geocode/json?address=" + encodeURIComponent($("#address").val()) + "&key=AIzaSyCNq4Z11yUBsVkl_FjKMq-BlnCGe-WEStU";
+            if ($("#address").val() == "") {
+                errorMessage = "<strong>Please enter a valid address, town or suburb.</strong>";
+            }
+            if (errorMessage != "") {                   
+                $("#userMessage").html('<div class="alert alert-danger alert-dismissible fade show" role="alert"> <button type="button" class="close" data-dismiss="alert" aria-label="Close"> <span aria-hidden="true">&times;</span> </button>' + errorMessage + '</div>');
+                
+                return;
+            } else {
+                 $.ajax({
+                    url: encodedSearch,
+                    type: "GET",
+                        success: function (data) {
+                            var postcodeMsg = "";
+                        
+                            //console.log(data);
+                            //alert("validate!");
+                    
+                            e.preventDefault();
+                            if (data['status'] != "OK") {
+                                //alert("NO RESULTS");
+                                errorMessage = "Could not find any results for: " + $("#address").val();
+                                $("#userMessage").html('<div class="alert alert-danger alert-dismissible fade show" role="alert"> <button type="button" class="close" data-dismiss="alert" aria-label="Close"> <span aria-hidden="true">&times;</span> </button>' + errorMessage + '</div>');
+                            } else {
+                                $.each(data['results'], function(key, value) {
+                                    $.each(value['address_components'], function(addressKey, addressValue) {
+                                        $.each(addressValue['types'], function(typekey, typevalue) {
+                                            if (typevalue == "postal_code") {
+                                                postcodeMsg += "<u>" + value['formatted_address'] + "</u>" + " postcode is: " + "<strong><u>" + addressValue['long_name'] + "</u></strong>" + "</br>";
+                                                //alert(postcodeMsg);
+                                            }
+                                        })
+                                    })
+                                })
+                                if (postcodeMsg != "") {
+                                    postcodeMsg = "<strong>The following post\/zip codes were found for " + "<u>" + $("#address").val() + "</u>" + ":</strong></br>" + postcodeMsg;
+                                    $("#userMessage").html('<div class="alert alert-success alert-dismissible fade show" role="alert"> <button type="button" class="close" data-dismiss="alert" aria-label="Close"> <span aria-hidden="true">&times;</span> </button>' + postcodeMsg + '</div>');
+                                    return;
+                                } else {
+                                    errorMessage = "Could not find a post\/zip code for <u>" + data['results'][0]['formatted_address'] + "</u></br>Please enter more specific address details";
+                                    $("#userMessage").html('<div class="alert alert-danger alert-dismissible fade show" role="alert"> <button type="button" class="close" data-dismiss="alert" aria-label="Close"> <span aria-hidden="true">&times;</span> </button>' + errorMessage + '</div>');
+                                    return;
+                                }
+                            }
+                        }
+                    })
+               
+                return;
+            }
+        }
+        
+    </script>
+  </body>
+</html>
